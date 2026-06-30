@@ -10,11 +10,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder'
 export async function POST(req: NextRequest) {
   const session = await auth();
   const orgId = (session as any)?.orgId as string | undefined;
-  if (!session?.user || !orgId) return NextResponse.redirect('/auth/signin');
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  if (!session?.user || !orgId) return NextResponse.redirect(`${base}/auth/signin`);
 
   const formData = await req.formData();
   const priceId = formData.get('priceId') as string;
-  if (!priceId) return NextResponse.redirect('/billing?error=no-price');
+  if (!priceId) return NextResponse.redirect(`${base}/billing?error=no-price`);
 
   const org = await prisma.organization.findUnique({ where: { id: orgId } });
   if (!org) return NextResponse.redirect('/billing');
@@ -42,6 +43,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.redirect(checkoutSession.url!);
   } catch (err: any) {
-    return NextResponse.redirect(`/billing?error=${encodeURIComponent(err.message)}`);
+    return NextResponse.redirect(`${base}/billing?error=${encodeURIComponent(err.message)}`);
   }
 }
