@@ -3,33 +3,18 @@ import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/db';
 
-// Lazily import adapter to avoid crash when Prisma is not generated
-let _adapter: any = null;
-function getAdapter() {
-  if (!_adapter) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { PrismaAdapter } = require('@auth/prisma-adapter');
-      _adapter = PrismaAdapter(prisma);
-    } catch {
-      _adapter = undefined;
-    }
-  }
-  return _adapter;
-}
-
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: getAdapter(),
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [GoogleProvider({
+          clientId: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        })]
+      : []),
     CredentialsProvider({
       name: 'credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email) return null;
@@ -41,19 +26,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async session({ session, user }) {
-      if (session.user && user) {
-        session.user.id = user.id;
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
         const membership = await prisma.orgMember.findFirst({
-          where: { userId: user.id },
+          where: { userId: user.id as string },
           include: { organization: true },
           orderBy: { joinedAt: 'asc' },
         });
         if (membership) {
-          (session as any).orgId = membership.organizationId;
-          (session as any).orgRole = membership.role;
-          (session as any).org = membership.organization;
+          token.orgId = membership.organizationId;
+          token.orgRole = membership.role;
+          token.org = membership.organization;
         }
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user && token) {
+        session.user.id = token.id as string;
+        (session as any).orgId = token.orgId;
+        (session as any).orgRole = token.orgRole;
+        (session as any).org = token.org;
       }
       return session;
     },
@@ -62,5 +56,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: '/auth/signin',
     error: '/auth/error',
   },
-  session: { strategy: 'database' },
+  session: { strategy: 'jwt' },
 });
