@@ -1,0 +1,6 @@
+{
+  "app": { "name": "Worfe RankFlow", "tagline": "SEO-платформа на базе ИИ" },
+  "nav": { "dashboard": "Панель управления", "projects": "Проекты", "keywords": "Ключевые слова", "content": "Контент", "analytics": "Аналитика", "integrations": "Интеграции", "team": "Команда", "billing": "Оплата", "settings": "Настройки" },
+  "auth": { "signIn": "Войти", "signOut": "Выйти", "signUp": "Регистрация", "email": "Эл. почта", "password": "Пароль", "forgotPassword": "Забыли пароль?", "continueWithGoogle": "Войти через Google", "noAccount": "Нет аккаунта?", "haveAccount": "Уже есть аккаунт?" },
+  "common": { "save": "Сохранить", "cancel": "Отмена", "delete": "Удалить", "edit": "Редактировать", "create": "Создать", "update": "Обновить", "confirm": "Подтвердить", "loading": "Загрузка...", "error": "Ошибка", "success": "Успешно", "search": "Поиск", "filter": "Фильтр", "export": "Экспорт", "import": "Импорт", "back": "Назад", "next": "Далее", "yes": "Да", "no": "Нет", "all": "Все", "none": "Нет", "required": "Обязательное поле", "optional": "Необязательно" }
+}

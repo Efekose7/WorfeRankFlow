@@ -1,0 +1,142 @@
+{
+  "app": {
+    "name": "Worfe RankFlow",
+    "tagline": "AI-Powered SEO Content Platform"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "keywords": "Keywords",
+    "content": "Content",
+    "analytics": "Analytics",
+    "integrations": "Integrations",
+    "team": "Team",
+    "billing": "Billing",
+    "settings": "Settings"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password",
+    "continueWithGoogle": "Continue with Google",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?"
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "totalArticles": "Total Articles",
+    "publishedArticles": "Published",
+    "totalKeywords": "Keywords",
+    "avgSeoScore": "Avg. SEO Score",
+    "recentActivity": "Recent Activity",
+    "quickActions": "Quick Actions",
+    "generateContent": "Generate Content",
+    "researchKeywords": "Research Keywords",
+    "viewAnalytics": "View Analytics"
+  },
+  "keywords": {
+    "title": "Keywords",
+    "research": "Research",
+    "addKeyword": "Add Keyword",
+    "phrase": "Keyword",
+    "volume": "Search Volume",
+    "difficulty": "Difficulty",
+    "intent": "Intent",
+    "status": "Status",
+    "cluster": "Cluster",
+    "generate": "Generate Content",
+    "intents": {
+      "INFORMATIONAL": "Informational",
+      "COMMERCIAL": "Commercial",
+      "TRANSACTIONAL": "Transactional",
+      "NAVIGATIONAL": "Navigational",
+      "COMPARISON": "Comparison"
+    }
+  },
+  "content": {
+    "title": "Content Management",
+    "newArticle": "New Article",
+    "generateArticle": "Generate Article",
+    "articleTitle": "Article Title",
+    "metaTitle": "Meta Title",
+    "metaDescription": "Meta Description",
+    "wordCount": "Word Count",
+    "seoScore": "SEO Score",
+    "status": {
+      "DRAFT": "Draft",
+      "GENERATING": "Generating",
+      "QA_PENDING": "Quality Check",
+      "QA_FAILED": "QA Failed",
+      "APPROVED": "Approved",
+      "SCHEDULED": "Scheduled",
+      "PUBLISHING": "Publishing",
+      "PUBLISHED": "Published",
+      "FAILED": "Failed",
+      "ARCHIVED": "Archived"
+    }
+  },
+  "analytics": {
+    "title": "Analytics",
+    "clicks": "Clicks",
+    "impressions": "Impressions",
+    "ctr": "CTR",
+    "position": "Position",
+    "organicTraffic": "Organic Traffic",
+    "topPages": "Top Pages",
+    "keywordRankings": "Keyword Rankings"
+  },
+  "integrations": {
+    "title": "Integrations",
+    "wordpress": "WordPress",
+    "shopify": "Shopify",
+    "webflow": "Webflow",
+    "wix": "Wix",
+    "customRest": "Custom REST API",
+    "webhook": "Webhook",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "test": "Test Connection",
+    "connected": "Connected",
+    "disconnected": "Not Connected"
+  },
+  "billing": {
+    "title": "Billing",
+    "currentPlan": "Current Plan",
+    "upgrade": "Upgrade",
+    "plans": {
+      "FREE": "Free",
+      "STARTER": "Starter",
+      "PRO": "Professional",
+      "ENTERPRISE": "Enterprise"
+    },
+    "quota": "Quota Usage",
+    "invoices": "Invoices"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "back": "Back",
+    "next": "Next",
+    "yes": "Yes",
+    "no": "No",
+    "all": "All",
+    "none": "None",
+    "required": "Required field",
+    "optional": "Optional"
+  }
+}

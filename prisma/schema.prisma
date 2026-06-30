@@ -1,0 +1,504 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth (NextAuth) ─────────────────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Users & Organizations ────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  locale        String    @default("tr")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  memberships   OrgMember[]
+  notifications Notification[]
+  apiKeys       ApiKey[]
+  auditLogs     AuditLog[]
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  logo        String?
+  plan        Plan     @default(STARTER)
+  planExpires DateTime?
+  stripeCustomerId    String? @unique
+  stripeSubscriptionId String? @unique
+  quotaArticles Int    @default(10)
+  quotaKeywords Int    @default(100)
+  usageArticles Int    @default(0)
+  usageKeywords Int    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     OrgMember[]
+  projects    Project[]
+  apiKeys     ApiKey[]
+  invoices    Invoice[]
+  auditLogs   AuditLog[]
+  notifications Notification[]
+}
+
+enum Plan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+model OrgMember {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  role           OrgRole      @default(MEMBER)
+  joinedAt       DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+}
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  EDITOR
+  MEMBER
+}
+
+// ─── Projects & Websites ──────────────────────────────────────────────────────
+
+model Project {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  domain         String
+  niche          String?
+  description    String?      @db.Text
+  locale         String       @default("tr")
+  targetLocales  String[]     @default(["tr"])
+  brandVoice     String?      @db.Text
+  targetAudience String?      @db.Text
+  prohibitedWords String[]    @default([])
+  writingGuidelines String?   @db.Text
+  customInstructions String?  @db.Text
+  status         ProjectStatus @default(ACTIVE)
+  lastCrawledAt  DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  keywords       Keyword[]
+  topicClusters  TopicCluster[]
+  articles       Article[]
+  integrations   Integration[]
+  schedules      PublishSchedule[]
+  analytics      AnalyticsRecord[]
+}
+
+enum ProjectStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+// ─── Keywords ─────────────────────────────────────────────────────────────────
+
+model Keyword {
+  id             String        @id @default(cuid())
+  projectId      String
+  phrase         String
+  locale         String        @default("tr")
+  searchVolume   Int?
+  difficulty     Int?
+  cpc            Float?
+  intent         SearchIntent  @default(INFORMATIONAL)
+  clusterId      String?
+  isPillar       Boolean       @default(false)
+  status         KeywordStatus @default(PENDING)
+  ranking        Int?
+  impressions    Int?
+  clicks         Int?
+  ctr            Float?
+  lastResearched DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  cluster        TopicCluster? @relation(fields: [clusterId], references: [id])
+  articles       Article[]
+
+  @@unique([projectId, phrase, locale])
+}
+
+enum SearchIntent {
+  INFORMATIONAL
+  COMMERCIAL
+  TRANSACTIONAL
+  NAVIGATIONAL
+  COMPARISON
+}
+
+enum KeywordStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  IN_USE
+}
+
+model TopicCluster {
+  id          String    @id @default(cuid())
+  projectId   String
+  name        String
+  description String?   @db.Text
+  pillarTitle String?
+  pillarUrl   String?
+  locale      String    @default("tr")
+  createdAt   DateTime  @default(now())
+
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  keywords    Keyword[]
+  articles    Article[]
+}
+
+// ─── Articles / Content ───────────────────────────────────────────────────────
+
+model Article {
+  id              String         @id @default(cuid())
+  projectId       String
+  keywordId       String?
+  clusterId       String?
+  title           String
+  slug            String
+  metaTitle       String?
+  metaDescription String?
+  h1              String?
+  content         String?        @db.Text
+  contentHtml     String?        @db.Text
+  locale          String         @default("tr")
+  wordCount       Int?
+  readingTime     Int?
+  seoScore        Int?
+  readabilityScore Int?
+  originalityScore Int?
+  eeatScore       Int?
+  status          ArticleStatus  @default(DRAFT)
+  qualityPassed   Boolean        @default(false)
+  publishedAt     DateTime?
+  scheduledAt     DateTime?
+  externalUrl     String?
+  externalId      String?
+  featuredImage   String?
+  openGraphImage  String?
+  schemaMarkup    Json?
+  hreflangTags    Json?
+  internalLinks   Json?
+  externalLinks   Json?
+  faqSection      Json?
+  altTexts        Json?
+  canonicalUrl    String?
+  generationPrompt String?       @db.Text
+  rewriteCount    Int            @default(0)
+  aiModel         String?
+  tokensUsed      Int?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  project         Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  keyword         Keyword?       @relation(fields: [keywordId], references: [id])
+  cluster         TopicCluster?  @relation(fields: [clusterId], references: [id])
+  images          ArticleImage[]
+  publishHistory  PublishHistory[]
+  analytics       AnalyticsRecord[]
+  qaResults       QAResult[]
+}
+
+enum ArticleStatus {
+  DRAFT
+  GENERATING
+  QA_PENDING
+  QA_FAILED
+  APPROVED
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+  ARCHIVED
+}
+
+model ArticleImage {
+  id          String   @id @default(cuid())
+  articleId   String
+  url         String
+  altText     String?
+  width       Int?
+  height      Int?
+  sizeBytes   Int?
+  source      String?
+  isFeature   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  article     Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+}
+
+model QAResult {
+  id              String   @id @default(cuid())
+  articleId       String
+  checkType       String
+  passed          Boolean
+  score           Int?
+  feedback        String?  @db.Text
+  checkedAt       DateTime @default(now())
+
+  article         Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+}
+
+// ─── Integrations & Publishing ────────────────────────────────────────────────
+
+model Integration {
+  id           String          @id @default(cuid())
+  projectId    String
+  type         IntegrationType
+  name         String
+  baseUrl      String?
+  apiKey       String?         @db.Text
+  apiSecret    String?         @db.Text
+  accessToken  String?         @db.Text
+  refreshToken String?         @db.Text
+  webhookUrl   String?
+  config       Json?
+  isActive     Boolean         @default(true)
+  lastTestedAt DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  project      Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  publishHistory PublishHistory[]
+}
+
+enum IntegrationType {
+  WORDPRESS
+  SHOPIFY
+  WEBFLOW
+  WIX
+  CUSTOM_REST
+  WEBHOOK
+}
+
+model PublishSchedule {
+  id          String     @id @default(cuid())
+  projectId   String
+  frequency   Frequency  @default(WEEKLY)
+  dayOfWeek   Int?
+  dayOfMonth  Int?
+  timeOfDay   String     @default("09:00")
+  timezone    String     @default("Europe/Istanbul")
+  isActive    Boolean    @default(true)
+  nextRunAt   DateTime?
+  lastRunAt   DateTime?
+  createdAt   DateTime   @default(now())
+
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+enum Frequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+model PublishHistory {
+  id            String        @id @default(cuid())
+  articleId     String
+  integrationId String
+  status        PublishStatus @default(PENDING)
+  externalId    String?
+  externalUrl   String?
+  errorMessage  String?       @db.Text
+  attempt       Int           @default(1)
+  publishedAt   DateTime?
+  createdAt     DateTime      @default(now())
+
+  article       Article       @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  integration   Integration   @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+}
+
+enum PublishStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  RETRYING
+}
+
+// ─── Analytics ────────────────────────────────────────────────────────────────
+
+model AnalyticsRecord {
+  id          String   @id @default(cuid())
+  projectId   String
+  articleId   String?
+  date        DateTime
+  clicks      Int      @default(0)
+  impressions Int      @default(0)
+  ctr         Float    @default(0)
+  position    Float?
+  sessions    Int      @default(0)
+  pageviews   Int      @default(0)
+  source      String?
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  article     Article? @relation(fields: [articleId], references: [id])
+
+  @@unique([projectId, articleId, date, source])
+}
+
+// ─── Queue & Jobs ─────────────────────────────────────────────────────────────
+
+model Job {
+  id         String    @id @default(cuid())
+  type       String
+  payload    Json
+  status     JobStatus @default(PENDING)
+  priority   Int       @default(0)
+  attempts   Int       @default(0)
+  maxAttempts Int      @default(3)
+  error      String?   @db.Text
+  result     Json?
+  scheduledAt DateTime?
+  startedAt  DateTime?
+  completedAt DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+model Notification {
+  id             String    @id @default(cuid())
+  userId         String?
+  organizationId String?
+  type           String
+  title          String
+  message        String    @db.Text
+  link           String?
+  read           Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+
+  user           User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+// ─── API Keys ─────────────────────────────────────────────────────────────────
+
+model ApiKey {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  name           String
+  key            String   @unique
+  lastUsedAt     DateTime?
+  expiresAt      DateTime?
+  isActive       Boolean  @default(true)
+  permissions    String[] @default(["read"])
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Audit Logs ───────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String?
+  action         String
+  resource       String
+  resourceId     String?
+  metadata       Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User?        @relation(fields: [userId], references: [id])
+}
+
+// ─── Billing ──────────────────────────────────────────────────────────────────
+
+model Invoice {
+  id             String        @id @default(cuid())
+  organizationId String
+  stripeInvoiceId String?      @unique
+  amount         Int
+  currency       String        @default("usd")
+  status         InvoiceStatus @default(PENDING)
+  paidAt         DateTime?
+  dueDate        DateTime?
+  periodStart    DateTime?
+  periodEnd      DateTime?
+  createdAt      DateTime      @default(now())
+
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  FAILED
+  VOID
+}

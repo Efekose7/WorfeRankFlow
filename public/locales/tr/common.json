@@ -1,0 +1,142 @@
+{
+  "app": {
+    "name": "Worfe RankFlow",
+    "tagline": "AI Destekli SEO İçerik Platformu"
+  },
+  "nav": {
+    "dashboard": "Gösterge Paneli",
+    "projects": "Projeler",
+    "keywords": "Anahtar Kelimeler",
+    "content": "İçerik",
+    "analytics": "Analitik",
+    "integrations": "Entegrasyonlar",
+    "team": "Ekip",
+    "billing": "Faturalandırma",
+    "settings": "Ayarlar"
+  },
+  "auth": {
+    "signIn": "Giriş Yap",
+    "signOut": "Çıkış Yap",
+    "signUp": "Kayıt Ol",
+    "email": "E-posta",
+    "password": "Şifre",
+    "forgotPassword": "Şifremi Unuttum",
+    "continueWithGoogle": "Google ile devam et",
+    "noAccount": "Hesabınız yok mu?",
+    "haveAccount": "Hesabınız var mı?"
+  },
+  "dashboard": {
+    "welcome": "Hoş Geldiniz",
+    "totalArticles": "Toplam Makale",
+    "publishedArticles": "Yayınlanan",
+    "totalKeywords": "Anahtar Kelime",
+    "avgSeoScore": "Ort. SEO Skoru",
+    "recentActivity": "Son Aktivite",
+    "quickActions": "Hızlı İşlemler",
+    "generateContent": "İçerik Oluştur",
+    "researchKeywords": "Anahtar Kelime Araştır",
+    "viewAnalytics": "Analitik Görüntüle"
+  },
+  "keywords": {
+    "title": "Anahtar Kelimeler",
+    "research": "Araştır",
+    "addKeyword": "Anahtar Kelime Ekle",
+    "phrase": "Kelime",
+    "volume": "Arama Hacmi",
+    "difficulty": "Güçlük",
+    "intent": "Niyet",
+    "status": "Durum",
+    "cluster": "Küme",
+    "generate": "İçerik Oluştur",
+    "intents": {
+      "INFORMATIONAL": "Bilgilendirici",
+      "COMMERCIAL": "Ticari",
+      "TRANSACTIONAL": "İşlemsel",
+      "NAVIGATIONAL": "Navigasyonel",
+      "COMPARISON": "Karşılaştırma"
+    }
+  },
+  "content": {
+    "title": "İçerik Yönetimi",
+    "newArticle": "Yeni Makale",
+    "generateArticle": "Makale Oluştur",
+    "articleTitle": "Makale Başlığı",
+    "metaTitle": "Meta Başlık",
+    "metaDescription": "Meta Açıklama",
+    "wordCount": "Kelime Sayısı",
+    "seoScore": "SEO Skoru",
+    "status": {
+      "DRAFT": "Taslak",
+      "GENERATING": "Oluşturuluyor",
+      "QA_PENDING": "Kalite Kontrolü",
+      "QA_FAILED": "Kalite Hatası",
+      "APPROVED": "Onaylandı",
+      "SCHEDULED": "Zamanlandı",
+      "PUBLISHING": "Yayınlanıyor",
+      "PUBLISHED": "Yayınlandı",
+      "FAILED": "Başarısız",
+      "ARCHIVED": "Arşivlendi"
+    }
+  },
+  "analytics": {
+    "title": "Analitik",
+    "clicks": "Tıklama",
+    "impressions": "Gösterim",
+    "ctr": "TO",
+    "position": "Pozisyon",
+    "organicTraffic": "Organik Trafik",
+    "topPages": "En İyi Sayfalar",
+    "keywordRankings": "Anahtar Kelime Sıralamaları"
+  },
+  "integrations": {
+    "title": "Entegrasyonlar",
+    "wordpress": "WordPress",
+    "shopify": "Shopify",
+    "webflow": "Webflow",
+    "wix": "Wix",
+    "customRest": "Özel REST API",
+    "webhook": "Webhook",
+    "connect": "Bağlan",
+    "disconnect": "Bağlantıyı Kes",
+    "test": "Test Et",
+    "connected": "Bağlandı",
+    "disconnected": "Bağlı Değil"
+  },
+  "billing": {
+    "title": "Faturalandırma",
+    "currentPlan": "Mevcut Plan",
+    "upgrade": "Yükselt",
+    "plans": {
+      "FREE": "Ücretsiz",
+      "STARTER": "Başlangıç",
+      "PRO": "Profesyonel",
+      "ENTERPRISE": "Kurumsal"
+    },
+    "quota": "Kota Kullanımı",
+    "invoices": "Faturalar"
+  },
+  "common": {
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "create": "Oluştur",
+    "update": "Güncelle",
+    "confirm": "Onayla",
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarılı",
+    "search": "Ara",
+    "filter": "Filtrele",
+    "export": "Dışa Aktar",
+    "import": "İçe Aktar",
+    "back": "Geri",
+    "next": "İleri",
+    "yes": "Evet",
+    "no": "Hayır",
+    "all": "Tümü",
+    "none": "Hiçbiri",
+    "required": "Zorunlu alan",
+    "optional": "İsteğe bağlı"
+  }
+}
