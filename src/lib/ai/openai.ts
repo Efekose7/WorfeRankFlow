@@ -1,15 +1,33 @@
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-let _client: OpenAI | null = null;
+let _client: GoogleGenerativeAI | null = null;
 
-export function getOpenAI(): OpenAI {
+export function getGemini(): GoogleGenerativeAI {
   if (!_client) {
-    _client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-      organization: process.env.OPENAI_ORG_ID,
-    });
+    _client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? '');
   }
   return _client;
+}
+
+function extractJson(raw: string): any {
+  const cleaned = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+  return JSON.parse(cleaned);
+}
+
+async function generateJson(prompt: string, maxOutputTokens: number, temperature: number): Promise<any> {
+  const gemini = getGemini();
+  const model = gemini.getGenerativeModel({
+    model: 'gemini-1.5-flash',
+    generationConfig: {
+      temperature,
+      maxOutputTokens,
+      responseMimeType: 'application/json',
+    },
+  });
+
+  const result = await model.generateContent(prompt);
+  const raw = result.response.text();
+  return { parsed: extractJson(raw), tokensUsed: result.response.usageMetadata?.totalTokenCount ?? 0 };
 }
 
 export interface ArticleGenerationInput {
@@ -53,10 +71,9 @@ const LOCALE_MAP: Record<string, string> = {
 };
 
 export async function generateArticle(input: ArticleGenerationInput): Promise<ArticleGenerationOutput> {
-  const openai = getOpenAI();
   const language = LOCALE_MAP[input.locale] ?? 'Turkish';
 
-  const systemPrompt = `You are an expert SEO content writer producing high-quality, E-E-A-T compliant articles in ${language}.
+  const prompt = `You are an expert SEO content writer producing high-quality, E-E-A-T compliant articles in ${language}.
 Brand: ${input.projectName} (${input.domain})
 ${input.niche ? `Niche: ${input.niche}` : ''}
 ${input.brandVoice ? `Brand voice: ${input.brandVoice}` : ''}
@@ -66,13 +83,11 @@ ${input.writingGuidelines ? `Writing guidelines: ${input.writingGuidelines}` : '
 ${input.customInstructions ? `Custom instructions: ${input.customInstructions}` : ''}
 ${input.existingTitles?.length ? `Do NOT write about these already covered topics: ${input.existingTitles.slice(0, 10).join(', ')}` : ''}
 
-CRITICAL: Respond ONLY with valid JSON in the exact schema below. No markdown, no code blocks.`;
-
-  const userPrompt = `Generate a comprehensive SEO article for the keyword: "${input.keyword}"
+Generate a comprehensive SEO article for the keyword: "${input.keyword}"
 Search intent: ${input.intent}
 ${input.relatedKeywords?.length ? `Related keywords to naturally include: ${input.relatedKeywords.slice(0, 10).join(', ')}` : ''}
 
-Return JSON with this exact structure:
+CRITICAL: Respond ONLY with valid JSON in the exact schema below. No markdown, no code blocks.
 {
   "title": "SEO optimized article title",
   "slug": "url-friendly-slug",
@@ -84,28 +99,16 @@ Return JSON with this exact structure:
   "faqSection": [{"question": "...", "answer": "..."}],
   "internalLinks": [{"anchor": "anchor text", "suggestion": "describe what page to link to"}],
   "externalLinks": [{"anchor": "anchor text", "url": "authoritative source URL", "reason": "why this source"}],
-  "schemaMarkup": {"@context": "https://schema.org", "@type": "Article", ...},
+  "schemaMarkup": {"@context": "https://schema.org", "@type": "Article"},
   "altTexts": ["descriptive alt text for featured image", "alt text for in-article image 2"],
   "hreflangSuggestions": ["suggested hreflang locales for this content"]
 }`;
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-    temperature: 0.7,
-    max_tokens: 6000,
-    response_format: { type: 'json_object' },
-  });
-
-  const raw = response.choices[0].message.content ?? '{}';
-  const parsed = JSON.parse(raw);
+  const { parsed, tokensUsed } = await generateJson(prompt, 8000, 0.7);
 
   return {
     ...parsed,
-    tokensUsed: response.usage?.total_tokens ?? 0,
+    tokensUsed,
   };
 }
 
@@ -115,32 +118,17 @@ export async function researchKeywords(input: {
   locale: string;
   existingKeywords?: string[];
 }): Promise<Array<{ phrase: string; intent: string; estimatedVolume: string; difficulty: string }>> {
-  const openai = getOpenAI();
   const language = LOCALE_MAP[input.locale] ?? 'Turkish';
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      {
-        role: 'system',
-        content: `You are an SEO keyword research expert specializing in ${language} content. Return ONLY valid JSON.`,
-      },
-      {
-        role: 'user',
-        content: `Research 20 high-value keywords for a ${input.niche} website at ${input.domain}.
+  const prompt = `You are an SEO keyword research expert specializing in ${language} content.
+Research 20 high-value keywords for a ${input.niche} website at ${input.domain}.
 ${input.existingKeywords?.length ? `Avoid these existing keywords: ${input.existingKeywords.slice(0, 20).join(', ')}` : ''}
 Focus on keywords with good search volume and low-to-medium competition.
 
-Return JSON: {"keywords": [{"phrase": "keyword", "intent": "INFORMATIONAL|COMMERCIAL|TRANSACTIONAL|NAVIGATIONAL|COMPARISON", "estimatedVolume": "high|medium|low", "difficulty": "low|medium|high"}]}`,
-      },
-    ],
-    temperature: 0.5,
-    max_tokens: 2000,
-    response_format: { type: 'json_object' },
-  });
+Return ONLY valid JSON: {"keywords": [{"phrase": "keyword", "intent": "INFORMATIONAL|COMMERCIAL|TRANSACTIONAL|NAVIGATIONAL|COMPARISON", "estimatedVolume": "high|medium|low", "difficulty": "low|medium|high"}]}`;
 
-  const raw = JSON.parse(response.choices[0].message.content ?? '{"keywords":[]}');
-  return raw.keywords ?? [];
+  const { parsed } = await generateJson(prompt, 2500, 0.5);
+  return parsed.keywords ?? [];
 }
 
 export async function analyzeDomain(domain: string): Promise<{
@@ -150,29 +138,14 @@ export async function analyzeDomain(domain: string): Promise<{
   brandVoice: string;
   topics: string[];
 }> {
-  const openai = getOpenAI();
-
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      {
-        role: 'system',
-        content: 'You are a brand and SEO analyst. Return ONLY valid JSON.',
-      },
-      {
-        role: 'user',
-        content: `Analyze the domain: ${domain}
+  const prompt = `You are a brand and SEO analyst.
+Analyze the domain: ${domain}
 Based on the domain name, infer the business niche, description, target audience, brand voice, and main content topics.
 
-Return JSON: {"niche": "...", "description": "...", "targetAudience": "...", "brandVoice": "professional|friendly|authoritative|conversational", "topics": ["topic1", "topic2", ...]}`,
-      },
-    ],
-    temperature: 0.5,
-    max_tokens: 500,
-    response_format: { type: 'json_object' },
-  });
+Return ONLY valid JSON: {"niche": "...", "description": "...", "targetAudience": "...", "brandVoice": "professional|friendly|authoritative|conversational", "topics": ["topic1", "topic2"]}`;
 
-  return JSON.parse(response.choices[0].message.content ?? '{}');
+  const { parsed } = await generateJson(prompt, 600, 0.5);
+  return parsed;
 }
 
 export async function qaCheckArticle(content: string, keyword: string): Promise<{
@@ -188,22 +161,12 @@ export async function qaCheckArticle(content: string, keyword: string): Promise<
   suggestions: string[];
   passed: boolean;
 }> {
-  const openai = getOpenAI();
-
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      {
-        role: 'system',
-        content: 'You are a content quality analyst. Evaluate content against SEO and E-E-A-T standards. Return ONLY valid JSON.',
-      },
-      {
-        role: 'user',
-        content: `Evaluate this article for the keyword "${keyword}":
+  const prompt = `You are a content quality analyst. Evaluate content against SEO and E-E-A-T standards.
+Evaluate this article for the keyword "${keyword}":
 
 ${content.slice(0, 3000)}...
 
-Return JSON: {
+Return ONLY valid JSON: {
   "duplicateContent": false,
   "keywordStuffing": false,
   "grammarIssues": false,
@@ -215,40 +178,22 @@ Return JSON: {
   "issues": [],
   "suggestions": [],
   "passed": true
-}`,
-      },
-    ],
-    temperature: 0.3,
-    max_tokens: 800,
-    response_format: { type: 'json_object' },
-  });
+}`;
 
-  return JSON.parse(response.choices[0].message.content ?? '{}');
+  const { parsed } = await generateJson(prompt, 900, 0.3);
+  return parsed;
 }
 
 export async function generateTopicClusters(keywords: string[], niche: string): Promise<
   Array<{ clusterName: string; pillarTitle: string; keywords: string[] }>
 > {
-  const openai = getOpenAI();
-
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      { role: 'system', content: 'You are an SEO topic cluster strategist. Return ONLY valid JSON.' },
-      {
-        role: 'user',
-        content: `Organize these keywords into topic clusters for a ${niche} website:
+  const prompt = `You are an SEO topic cluster strategist.
+Organize these keywords into topic clusters for a ${niche} website:
 Keywords: ${keywords.join(', ')}
 
 Create 3-6 clusters with pillar page titles.
-Return JSON: {"clusters": [{"clusterName": "...", "pillarTitle": "...", "keywords": [...]}]}`,
-      },
-    ],
-    temperature: 0.5,
-    max_tokens: 1000,
-    response_format: { type: 'json_object' },
-  });
+Return ONLY valid JSON: {"clusters": [{"clusterName": "...", "pillarTitle": "...", "keywords": []}]}`;
 
-  const raw = JSON.parse(response.choices[0].message.content ?? '{"clusters":[]}');
-  return raw.clusters ?? [];
+  const { parsed } = await generateJson(prompt, 1200, 0.5);
+  return parsed.clusters ?? [];
 }

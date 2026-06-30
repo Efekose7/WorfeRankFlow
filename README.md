@@ -72,7 +72,7 @@ A production-ready SaaS platform that combines artificial intelligence, SEO anal
 | Styling | Tailwind CSS |
 | Database | PostgreSQL (via Prisma ORM) |
 | Auth | NextAuth v5 (Google OAuth + Credentials) |
-| AI | OpenAI GPT-4o |
+| AI | Google Gemini (gemini-1.5-flash, free tier) |
 | Queue | BullMQ + Redis |
 | Billing | Stripe |
 | UI | Radix UI primitives |
@@ -88,7 +88,7 @@ A production-ready SaaS platform that combines artificial intelligence, SEO anal
 - Node.js 18+
 - PostgreSQL database
 - Redis instance
-- OpenAI API key
+- Google Gemini API key (free at aistudio.google.com/apikey)
 - Stripe account (for billing)
 
 ### Installation
@@ -152,7 +152,7 @@ src/
 │   ├── layout/          # Sidebar, TopBar
 │   └── ui/              # Reusable UI components
 ├── lib/
-│   ├── ai/              # OpenAI integration
+│   ├── ai/              # Google Gemini integration
 │   ├── integrations/    # WordPress, Shopify, webhooks
 │   ├── queue/           # BullMQ job definitions
 │   ├── seo/             # SEO analysis tools
