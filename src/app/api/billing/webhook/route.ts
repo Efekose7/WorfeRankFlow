@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 import Stripe from 'stripe';
 import { planLimits } from '@/lib/utils';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? 'sk_test_placeholder', {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
   apiVersion: '2026-06-24.dahlia' as any,
 });
 
