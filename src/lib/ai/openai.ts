@@ -17,7 +17,7 @@ function extractJson(raw: string): any {
 async function generateJson(prompt: string, maxOutputTokens: number, temperature: number): Promise<any> {
   const gemini = getGemini();
   const model = gemini.getGenerativeModel({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.0-flash',
     generationConfig: {
       temperature,
       maxOutputTokens,
